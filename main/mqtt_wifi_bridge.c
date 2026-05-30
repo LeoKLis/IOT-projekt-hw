@@ -127,6 +127,11 @@ esp_err_t wifi_mqtt_init(void)
     return ESP_OK;
 }
 
+/**
+ * @brief Funkcija koja šalje MQTT pakete preko WiFi
+ * 
+ * @return 
+ */
 void mqtt_publish_sensors(void) 
 {
     if (!mqtt_connected || mqtt_client == NULL) return;
