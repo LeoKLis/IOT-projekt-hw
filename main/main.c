@@ -78,7 +78,11 @@ void app_main(void) {
     gpio_set_direction(BUSY_PIN, GPIO_MODE_INPUT);
     init_i2c(&dev_handle);
 
-    wifi_mqtt_init();
+    if(wifi_mqtt_init() != ESP_OK)
+    {
+        ESP_LOGE("CRITICAL", "WiFI & MQTT INIT FAILURE!");
+        abort();
+    }
 
     xTaskCreate(dhtTask, "DHT Task", 2048, NULL, 1, NULL);
     xTaskCreate(cdmTask, "CDM Task", 2048, NULL, 1, NULL);

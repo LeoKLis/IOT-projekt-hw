@@ -1,5 +1,7 @@
 #pragma once
 
+#include "esp_err.h"
+
 // TODO: Zamijeniti template sa pravim vrijednostima
 
 #define WIFI_SSID      "TEMPLATE"
@@ -10,5 +12,5 @@
 #define MQTT_TOPIC_C   "TEMPLATE" // CO2
 #define MQTT_PORT      1883
 
-void wifi_mqtt_init(void);
+esp_err_t wifi_mqtt_init(void);
 void mqtt_publish_sensors(void);

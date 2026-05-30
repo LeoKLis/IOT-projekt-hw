@@ -7,7 +7,11 @@
 #include <freertos/FreeRTOS.h>
 #include <esp_log.h>
 
+#include "util.h"
+
 #include "mqtt_wifi_bridge.h"
+
+//--- GLOBALS ---------------------------------------------------------------------------------------------- 
 
 extern float humidity;
 extern float temperature;
@@ -16,23 +20,45 @@ extern uint16_t concentration;
 static esp_mqtt_client_handle_t mqtt_client = NULL;
 static bool mqtt_connected = false;
 
+//--- UTIL ------------------------------------------------------------------------------------------------- 
+
+/**
+ * @brief Event handler za MQTT događaje (events).
+ *        Za potrebe ovog projekta ovi su dovoljni:
+ *          - MQTT_EVENT_CONNECTED: Spojen na MQTT poslužitelj
+ *          - MQTT_EVENT_DISCONNECTED: Odspojen od MQTT poslužitelja
+ *        Ne vrši auto-reconnect unutar handlera
+ * @return 
+ */
 static void mqtt_event_handler(void* arg, esp_event_base_t base, int32_t event_id, void* event_data) 
 {
     esp_mqtt_event_handle_t event = event_data;
-    switch (event->event_id) {
+    switch (event->event_id) 
+    {
         case MQTT_EVENT_CONNECTED:
             mqtt_connected = true;
             ESP_LOGI("mqtt", "Connected to broker");
             break;
+
         case MQTT_EVENT_DISCONNECTED:
             mqtt_connected = false;
             ESP_LOGW("mqtt", "Disconnected from broker");
             break;
+
         default:
             break;
     }
 }
 
+/**
+ * @brief Event handler za WiFi događaje (events).
+ *        Za potrebe ovog projekta ovi su dovoljni:
+ *          - WIFI_EVENT_STA_START: WiFi počinje spajanje, poziva prikladne funkcije
+ *          - WIFI_EVENT_STA_DISCONNECTED: Odspojen s WiFi mreže, pokušat će auto-reconnect
+ *          - IP_EVENT_STA_GOT_IP: Uređaju je dodijeljena WiFi mreža, odnosno dobio je IP adresu
+ *        Ne vrši auto-reconnect unutar handlera
+ * @return 
+ */
 static void wifi_event_handler(void* arg, esp_event_base_t base, int32_t event_id, void* event_data) 
 {
     if (base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START)
@@ -41,12 +67,19 @@ static void wifi_event_handler(void* arg, esp_event_base_t base, int32_t event_i
     {
         ESP_LOGW("wifi", "Disconnected, retrying...");
         esp_wifi_connect();
-    } 
+    }
     else if (base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP)
         ESP_LOGI("wifi", "Got IP");
 }
 
-void wifi_mqtt_init(void) 
+//--- API -------------------------------------------------------------------------------------------------- 
+
+/**
+ * @brief Funkcija koja inicijalizira WiFi i MQTT veze
+ * 
+ * @return 
+ */
+esp_err_t wifi_mqtt_init(void) 
 {
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND)
@@ -55,15 +88,17 @@ void wifi_mqtt_init(void)
         nvs_flash_init();
     }
 
-    esp_netif_init();
-    esp_event_loop_create_default();
-    esp_netif_create_default_wifi_sta();
+    ERR_CHECK(esp_netif_init(), esp_netif_init);
+    ERR_CHECK(esp_event_loop_create_default(), esp_event_loop_create_default);
+
+    esp_netif_t* cr_default_wifi_sta = esp_netif_create_default_wifi_sta();
+    ERR_CHECK((cr_default_wifi_sta == NULL ? ESP_ERR_ESP_NETIF_BASE : ESP_OK), esp_netif_create_default_wifi_sta);
 
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-    esp_wifi_init(&cfg);
+    ERR_CHECK(esp_wifi_init(&cfg), esp_wifi_init);
 
-    esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID,    wifi_event_handler, NULL, NULL);
-    esp_event_handler_instance_register(IP_EVENT,   IP_EVENT_STA_GOT_IP, wifi_event_handler, NULL, NULL);
+    ERR_CHECK(esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID,    wifi_event_handler, NULL, NULL), esp_event_handler_instance_register);
+    ERR_CHECK(esp_event_handler_instance_register(IP_EVENT,   IP_EVENT_STA_GOT_IP, wifi_event_handler, NULL, NULL), esp_event_handler_instance_register);
 
     wifi_config_t wifi_cfg = {
         .sta = {
@@ -71,24 +106,25 @@ void wifi_mqtt_init(void)
             .password = WIFI_PASS,
         },
     };
-    esp_wifi_set_mode(WIFI_MODE_STA);
-    esp_wifi_set_config(WIFI_IF_STA, &wifi_cfg);
-    esp_wifi_start();
+    ERR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA), esp_wifi_set_mode);
+    ERR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_cfg), esp_wifi_set_config);
+    ERR_CHECK(esp_wifi_start(), esp_wifi_start);
 
     esp_netif_t* netif = esp_netif_get_handle_from_ifkey("WIFI_STA_DEF");
     esp_netif_ip_info_t ip_info;
-    while (esp_netif_get_ip_info(netif, &ip_info) != ESP_OK || ip_info.ip.addr == 0) {
-        vTaskDelay(100 / portTICK_PERIOD_MS);
-    }
+    while (esp_netif_get_ip_info(netif, &ip_info) != ESP_OK || ip_info.ip.addr == 0) { vTaskDelay(100 / portTICK_PERIOD_MS); }
 
     esp_mqtt_client_config_t mqtt_cfg = {
         .broker.address.uri  = MQTT_BROKER,
         .broker.address.port = MQTT_PORT,
     };
     mqtt_client = esp_mqtt_client_init(&mqtt_cfg);
-    esp_mqtt_client_register_event(mqtt_client, ESP_EVENT_ANY_ID,
-                                   mqtt_event_handler, NULL);
-    esp_mqtt_client_start(mqtt_client);
+    ERR_CHECK(esp_mqtt_client_register_event(mqtt_client, ESP_EVENT_ANY_ID, mqtt_event_handler, NULL), esp_mqtt_client_register_event);
+    ERR_CHECK(esp_mqtt_client_start(mqtt_client), esp_mqtt_client_start);
+
+    while (!mqtt_connected) { vTaskDelay(100 / portTICK_PERIOD_MS); }
+
+    return ESP_OK;
 }
 
 void mqtt_publish_sensors(void) 
