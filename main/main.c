@@ -9,10 +9,17 @@
 #include <driver/gpio.h>
 #include <driver/i2c_master.h>
 
+#include "mqtt_wifi_bridge.h"
+
 #include <dht.h>
 #include <stdint.h>
 
-float humidity = 0.0, temperature = 0.0;
+float humidity = 0.0;
+float temperature = 0.0;
+uint16_t concentration = 0;
+
+static i2c_master_dev_handle_t dev_handle;
+static const gpio_num_t BUSY_PIN = GPIO_NUM_10;
 
 void dhtTask(void* pvParams) {
     esp_err_t err = 0;
@@ -26,6 +33,7 @@ void dhtTask(void* pvParams) {
             ESP_LOGE("main", "Error reading DHT %d", err);
         } else {
             ESP_LOGI("main", "Temp: %f Hum: %f", temperature, humidity);
+            mqtt_publish_sensors();
         }
     }
 }
@@ -50,15 +58,8 @@ void init_i2c(i2c_master_dev_handle_t* dev_handle) {
 }
 
 void cdmTask(void* pvParams) {
-    const gpio_num_t BUSY_PIN = GPIO_NUM_10;
-    gpio_set_direction(BUSY_PIN, GPIO_MODE_INPUT);
-
-    i2c_master_dev_handle_t dev_handle;
-    init_i2c(&dev_handle);
-
     uint8_t conc_addr = 0b11;
     uint8_t conc_data[2];
-    uint16_t concentration;
 
     while(1) {
         vTaskDelay(10000 / portTICK_PERIOD_MS);
@@ -69,10 +70,18 @@ void cdmTask(void* pvParams) {
 
         vTaskDelay(100 / portTICK_PERIOD_MS);
         ESP_LOGI("main", "CO2 concentration: %d", concentration);
+        mqtt_publish_sensors();
     }
 }
 
 void app_main(void) {
-    xTaskCreate(dhtTask, "DHT Task", 1024, NULL, 1, NULL);
-    xTaskCreate(cdmTask, "CDM Task", 1024, NULL, 1, NULL);
+    gpio_set_direction(BUSY_PIN, GPIO_MODE_INPUT);
+    init_i2c(&dev_handle);
+
+    wifi_mqtt_init();
+
+    xTaskCreate(dhtTask, "DHT Task", 2048, NULL, 1, NULL);
+    xTaskCreate(cdmTask, "CDM Task", 2048, NULL, 1, NULL);
+
+    while(1) { vTaskDelay(1000 / portTICK_PERIOD_MS); }
 }
