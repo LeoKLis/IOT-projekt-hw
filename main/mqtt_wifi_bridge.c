@@ -132,20 +132,26 @@ esp_err_t wifi_mqtt_init(void)
  * 
  * @return 
  */
-void mqtt_publish_sensors(void) 
+esp_err_t mqtt_publish_sensors(void) 
 {
-    if (!mqtt_connected || mqtt_client == NULL) return;
+    if (!mqtt_connected || mqtt_client == NULL) return ESP_ERR_INVALID_STATE;
 
     char buf[16];
+    int err;
 
     snprintf(buf, sizeof(buf), "%.1f", temperature);
-    esp_mqtt_client_publish(mqtt_client, MQTT_TOPIC_T, buf, 0, 1, 0);
+    err = esp_mqtt_client_publish(mqtt_client, MQTT_TOPIC_T, buf, 0, 1, 0);
+    ERR_CHECK((err == -1 ? ESP_ERR_INVALID_STATE : err == -2 ? ESP_ERR_NO_MEM : ESP_OK), esp_mqtt_client_publish);
 
     snprintf(buf, sizeof(buf), "%.1f", humidity);
-    esp_mqtt_client_publish(mqtt_client, MQTT_TOPIC_H, buf, 0, 1, 0);
+    err = esp_mqtt_client_publish(mqtt_client, MQTT_TOPIC_H, buf, 0, 1, 0);
+    ERR_CHECK((err == -1 ? ESP_ERR_INVALID_STATE : err == -2 ? ESP_ERR_NO_MEM : ESP_OK), esp_mqtt_client_publish);
 
     snprintf(buf, sizeof(buf), "%d", concentration);
-    esp_mqtt_client_publish(mqtt_client, MQTT_TOPIC_C, buf, 0, 1, 0);
+    err = esp_mqtt_client_publish(mqtt_client, MQTT_TOPIC_C, buf, 0, 1, 0);
+    ERR_CHECK((err == -1 ? ESP_ERR_INVALID_STATE : err == -2 ? ESP_ERR_NO_MEM : ESP_OK), esp_mqtt_client_publish);
 
     ESP_LOGI("MQTT", "PUB data:\n\ttemp=%.1f hum=%.1f co2=%d", temperature, humidity, concentration);
+
+    return ESP_OK;
 }

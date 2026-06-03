@@ -3,4 +3,4 @@
 #include "esp_err.h"
 
 esp_err_t wifi_mqtt_init(void);
-void mqtt_publish_sensors(void);
+esp_err_t mqtt_publish_sensors(void);
