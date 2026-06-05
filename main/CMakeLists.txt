@@ -1,4 +1,4 @@
-idf_component_register(SRCS         "main.c" "mqtt_wifi_bridge.c"
+idf_component_register(SRCS         "main.c" "mqtt_wifi_bridge.c" "actuators.c"
                        REQUIRES     esp_wifi nvs_flash mqtt esp_netif esp_driver_i2c
                        INCLUDE_DIRS "."
                     )

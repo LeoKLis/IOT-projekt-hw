@@ -3,11 +3,13 @@
 #include "esp_event.h"
 #include "nvs_flash.h"
 #include "mqtt_client.h"
+#include "freertos/FreeRTOS.h"
+#include "esp_log.h"
+
 #include <string.h>
-#include <freertos/FreeRTOS.h>
-#include <esp_log.h>
 
 #include "util.h"
+#include "actuators.h"
 
 #include "mqtt_wifi_bridge.h"
 
@@ -43,6 +45,15 @@ static void mqtt_event_handler(void* arg, esp_event_base_t base, int32_t event_i
         case MQTT_EVENT_DISCONNECTED:
             mqtt_connected = false;
             ESP_LOGW("mqtt", "Disconnected from broker");
+            break;
+
+        case MQTT_EVENT_DATA:
+            actuator_t* act;
+            if(get_actuator(event->topic, event->topic_len, &act) == ESP_OK)
+            {
+                uint32_t val = (uint32_t)atoi(event_data);
+                call_act_handler(act, (void*)&val);
+            }
             break;
 
         default:
@@ -124,6 +135,11 @@ esp_err_t wifi_mqtt_init(void)
 
     while (!mqtt_connected) { vTaskDelay(100 / portTICK_PERIOD_MS); }
 
+    init_actuators();
+    esp_mqtt_client_subscribe(mqtt_client, MQTT_TOPIC_AIRCOND, 1);
+    esp_mqtt_client_subscribe(mqtt_client, MQTT_TOPIC_AIRFLOW, 1);
+    esp_mqtt_client_subscribe(mqtt_client, MQTT_TOPIC_DEHUMID, 1);
+
     return ESP_OK;
 }
 
@@ -140,15 +156,15 @@ esp_err_t mqtt_publish_sensors(void)
     int err;
 
     snprintf(buf, sizeof(buf), "%.1f", temperature);
-    err = esp_mqtt_client_publish(mqtt_client, MQTT_TOPIC_T, buf, 0, 1, 0);
+    err = esp_mqtt_client_publish(mqtt_client, MQTT_TOPIC_TEMP, buf, 0, 1, 0);
     ERR_CHECK((err == -1 ? ESP_ERR_INVALID_STATE : err == -2 ? ESP_ERR_NO_MEM : ESP_OK), esp_mqtt_client_publish);
 
     snprintf(buf, sizeof(buf), "%.1f", humidity);
-    err = esp_mqtt_client_publish(mqtt_client, MQTT_TOPIC_H, buf, 0, 1, 0);
+    err = esp_mqtt_client_publish(mqtt_client, MQTT_TOPIC_HUMID, buf, 0, 1, 0);
     ERR_CHECK((err == -1 ? ESP_ERR_INVALID_STATE : err == -2 ? ESP_ERR_NO_MEM : ESP_OK), esp_mqtt_client_publish);
 
     snprintf(buf, sizeof(buf), "%d", concentration);
-    err = esp_mqtt_client_publish(mqtt_client, MQTT_TOPIC_C, buf, 0, 1, 0);
+    err = esp_mqtt_client_publish(mqtt_client, MQTT_TOPIC_CO2, buf, 0, 1, 0);
     ERR_CHECK((err == -1 ? ESP_ERR_INVALID_STATE : err == -2 ? ESP_ERR_NO_MEM : ESP_OK), esp_mqtt_client_publish);
 
     ESP_LOGI("MQTT", "PUB data:\n\ttemp=%.1f hum=%.1f co2=%d", temperature, humidity, concentration);
