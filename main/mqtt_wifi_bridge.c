@@ -51,7 +51,8 @@ static void mqtt_event_handler(void* arg, esp_event_base_t base, int32_t event_i
             actuator_t* act;
             if(get_actuator(event->topic, event->topic_len, &act) == ESP_OK)
             {
-                uint32_t val = (uint32_t)atoi(event_data);
+                char payload[2] = {event->data[0], 0};
+                uint32_t val = (uint32_t)atoi(payload);
                 call_act_handler(act, (void*)&val);
             }
             break;
