@@ -24,9 +24,7 @@
 #define MQTT_PORT      1883
 
 // Topics ESP->HA
-#define MQTT_TOPIC_TEMP   "roomsense/" ROOMID "/telemetry/temp"     // temperatura
-#define MQTT_TOPIC_HUMID  "roomsense/" ROOMID "/telemetry/humidity" // vlaga
-#define MQTT_TOPIC_CO2    "roomsense/" ROOMID "/telemetry/co2"       // CO2
+#define MQTT_TOPIC_ROOM   "roomsense/" ROOMID "/telemetry"
 
 // Topics HA->ESP
 #define MQTT_TOPIC_AIRCOND  ROOMID "/aircond" // klimatizacija
