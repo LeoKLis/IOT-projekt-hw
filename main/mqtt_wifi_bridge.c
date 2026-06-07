@@ -39,6 +39,9 @@ static void mqtt_event_handler(void* arg, esp_event_base_t base, int32_t event_i
     {
         case MQTT_EVENT_CONNECTED:
             mqtt_connected = true;
+            esp_mqtt_client_subscribe(mqtt_client, MQTT_TOPIC_AIRCOND, 1);
+            esp_mqtt_client_subscribe(mqtt_client, MQTT_TOPIC_AIRFLOW, 1);
+            esp_mqtt_client_subscribe(mqtt_client, MQTT_TOPIC_DEHUMID, 1);
             ESP_LOGI("mqtt", "Connected to broker");
             break;
 
@@ -138,9 +141,6 @@ esp_err_t wifi_mqtt_init(void)
     while (!mqtt_connected) { vTaskDelay(100 / portTICK_PERIOD_MS); }
 
     init_actuators();
-    esp_mqtt_client_subscribe(mqtt_client, MQTT_TOPIC_AIRCOND, 1);
-    esp_mqtt_client_subscribe(mqtt_client, MQTT_TOPIC_AIRFLOW, 1);
-    esp_mqtt_client_subscribe(mqtt_client, MQTT_TOPIC_DEHUMID, 1);
 
     return ESP_OK;
 }
