@@ -20,23 +20,23 @@ float humidity = 0.0;
 float temperature = 0.0;
 uint16_t concentration = 0;
 
-#ifndef DEBUG
+// #ifndef DEBUG
 static i2c_master_dev_handle_t dev_handle;
 static const gpio_num_t BUSY_PIN = GPIO_NUM_10;
-#endif
+// #endif
 
 void dhtTask(void* pvParams) {
-#ifdef DEBUG
-    while(1) 
-    {
-        vTaskDelay(5000 / portTICK_PERIOD_MS);
-        temperature += 1.f;
-        humidity    += 1.f;
-        ESP_LOGI("main", "Temp: %f Hum: %f", temperature, humidity);
-        mqtt_publish_sensors();
-    }
+// #ifdef DEBUG
+//     while(1) 
+//     {
+//         vTaskDelay(5000 / portTICK_PERIOD_MS);
+//         temperature += 1.f;
+//         humidity    += 1.f;
+//         ESP_LOGI("main", "Temp: %f Hum: %f", temperature, humidity);
+//         mqtt_publish_sensors();
+//     }
 
-#else
+// #else
     esp_err_t err = 0;
 
     while(1) {
@@ -51,7 +51,7 @@ void dhtTask(void* pvParams) {
             mqtt_publish_sensors();
         }
     }
-#endif
+// #endif
 }
 
 void init_i2c(i2c_master_dev_handle_t* dev_handle) {
@@ -59,7 +59,7 @@ void init_i2c(i2c_master_dev_handle_t* dev_handle) {
     i2c_master_bus_config_t master_config = {
         .clk_source = I2C_CLK_SRC_DEFAULT,
         .i2c_port = 0,
-        .sda_io_num = GPIO_NUM_8,
+        .sda_io_num = GPIO_NUM_18,
         .scl_io_num = GPIO_NUM_9,
         .flags.enable_internal_pullup = 1
     };
@@ -74,15 +74,15 @@ void init_i2c(i2c_master_dev_handle_t* dev_handle) {
 }
 
 void cdmTask(void* pvParams) {
-#ifdef DEBUG
-    while(1) 
-    {
-        vTaskDelay(10000 / portTICK_PERIOD_MS);
-        ESP_LOGI("main", "CO2 concentration: %d", ++concentration);
-        mqtt_publish_sensors();
-    }
+// #ifdef DEBUG
+    // while(1) 
+    // {
+    //     vTaskDelay(10000 / portTICK_PERIOD_MS);
+    //     ESP_LOGI("main", "CO2 concentration: %d", ++concentration);
+    //     mqtt_publish_sensors();
+    // }
 
-#else
+// #else
     uint8_t conc_addr = 0b11;
     uint8_t conc_data[2];
 
@@ -97,14 +97,14 @@ void cdmTask(void* pvParams) {
         ESP_LOGI("main", "CO2 concentration: %d", concentration);
         mqtt_publish_sensors();
     }
-#endif
+// #endif
 }
 
 void app_main(void) {
-#ifndef DEBUG
+// #ifndef DEBUG
     gpio_set_direction(BUSY_PIN, GPIO_MODE_INPUT);
     init_i2c(&dev_handle);
-#endif
+// #endif
 
     if(wifi_mqtt_init() != ESP_OK)
     {
@@ -115,5 +115,5 @@ void app_main(void) {
     xTaskCreate(dhtTask, "DHT Task", 2048, NULL, 1, NULL);
     xTaskCreate(cdmTask, "CDM Task", 2048, NULL, 1, NULL);
 
-    while(1) { vTaskDelay(1000 / portTICK_PERIOD_MS); }
+    // while(1) { vTaskDelay(1000 / portTICK_PERIOD_MS); }
 }

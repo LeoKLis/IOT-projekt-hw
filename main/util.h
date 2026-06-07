@@ -1,6 +1,6 @@
 #pragma once
 
-// #define DEBUG
+#define DEBUG
 
 #ifndef ROOMID
 #define ROOMID "room1"
@@ -15,9 +15,9 @@
 
 #else
 
-#define WIFI_SSID      "rokomob"
-#define WIFI_PASS      "mqtt_test1234"
-#define MQTT_BROKER    "mqtt://10.243.211.121"
+#define WIFI_SSID      "Burbon"
+#define WIFI_PASS      "daj2eura"
+#define MQTT_BROKER    "mqtt://192.168.1.113"
 
 #endif
 
