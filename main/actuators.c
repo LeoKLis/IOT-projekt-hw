@@ -14,6 +14,8 @@
 
 #include "actuators.h"
 
+volatile uint8_t red = 0, green = 0, blue = 0;
+
 struct _actuator_t_ {
     char* tag;
     size_t tag_len;
@@ -40,17 +42,16 @@ esp_err_t air_conditioning(void* param)
 {
     uint32_t* val = (uint32_t*)param;
     ESP_LOGI("foo_ac", "Val: %u", *val);
-    if(*val == 1) {
-
-        // Set color (R, G, B)
-        led_strip_set_pixel(led_strip, 0, 0, 255, 0); // Red
+    if(*val == 1) 
+    {
+        green = 255;
+        led_strip_set_pixel(led_strip, 0, red, green, blue);
         led_strip_refresh(led_strip);
-
-        // Turn off
-
-        // ERR_CHECK(blink(ACTUATOR_ALERT_PIN, 3), air_ventilation);
-    } else {
-        led_strip_clear(led_strip);
+    } 
+    else {
+        green = 0;
+        led_strip_set_pixel(led_strip, 0, red, green, blue);
+        led_strip_refresh(led_strip);
     }
     
     return ESP_OK;
@@ -59,17 +60,17 @@ esp_err_t air_conditioning(void* param)
 esp_err_t air_ventilation(void* param)
 {
     uint32_t* val = (uint32_t*)param;
-    if(*val == 1) {
-
-        // Set color (R, G, B)
-        led_strip_set_pixel(led_strip, 0, 255, 0, 0); // Red
+    if(*val == 1) 
+    {
+        red = 255;
+        led_strip_set_pixel(led_strip, 0, red, green, blue);
         led_strip_refresh(led_strip);
-
-        // Turn off
-
-        // ERR_CHECK(blink(ACTUATOR_ALERT_PIN, 3), air_ventilation);
-    } else {
-        led_strip_clear(led_strip);
+    }
+    else 
+    {
+        red = 0;
+        led_strip_set_pixel(led_strip, 0, red, green, blue);
+        led_strip_refresh(led_strip);
     }
     
     return ESP_OK;
@@ -78,15 +79,17 @@ esp_err_t air_ventilation(void* param)
 esp_err_t dehumidification(void* param)
 {
     uint32_t* val = (uint32_t*)param;
-    if(*val == 1) {
-        // Set color (R, G, B)
-        led_strip_set_pixel(led_strip, 0, 0, 0, 255); // Red
+    if(*val == 1) 
+    {
+        blue = 255;
+        led_strip_set_pixel(led_strip, 0, red, green, blue);
         led_strip_refresh(led_strip);
-
-        // Turn off
-        // ERR_CHECK(blink(ACTUATOR_ALERT_PIN, 4), dehumidification);
-    } else {
-        led_strip_clear(led_strip);
+    }
+    else 
+    {
+        blue = 0;
+        led_strip_set_pixel(led_strip, 0, red, green, blue);
+        led_strip_refresh(led_strip);
     }
     
     return ESP_OK;
