@@ -32,10 +32,10 @@
 #define MQTT_TOPIC_DEHUMID  ROOMID "/dehumid" // odvlaživanje
 
 // Actuator pins
-#define ACTUATOR_AIRCOND_PIN GPIO_NUM_11
-#define ACTUATOR_AIRFLOW_PIN GPIO_NUM_12
-#define ACTUATOR_DEHUMID_PIN GPIO_NUM_13
+#define ACTUATOR_ALERT_PIN GPIO_NUM_11
 
+// Constants
+#define BLINK_TIME_US 500000LL
 
 #define ERR_CHECK(err_flag, pot_err_src)                                      \
     do {                                                                      \

@@ -19,14 +19,25 @@ struct _actuator_t_ {
     esp_err_t (*handler)(void*);
 };
 
+static esp_err_t blink(gpio_num_t pin, size_t count)
+{
+    while(count--)
+    {
+        esp_rom_delay_us(BLINK_TIME_US);
+        ERR_CHECK(gpio_set_level(pin, 1), blink);
+        esp_rom_delay_us(BLINK_TIME_US);
+        ERR_CHECK(gpio_set_level(pin, 0), blink);
+    }
+
+    return ESP_OK;
+}
+
 esp_err_t air_conditioning(void* param)
 {
     uint32_t* val = (uint32_t*)param;
     ESP_LOGI("foo_ac", "Val: %u", *val);
-    if(*val == 0)
-        ERR_CHECK(gpio_set_level(ACTUATOR_AIRCOND_PIN, 0), air_conditioning);
-    else if (*val == 1)
-        ERR_CHECK(gpio_set_level(ACTUATOR_AIRCOND_PIN, 1), air_conditioning);
+    if(*val == 1)
+        ERR_CHECK(blink(ACTUATOR_ALERT_PIN, 2), air_conditioning);
     
     return ESP_OK;
 }
@@ -34,10 +45,8 @@ esp_err_t air_conditioning(void* param)
 esp_err_t air_ventilation(void* param)
 {
     uint32_t* val = (uint32_t*)param;
-    if(*val == 0)
-        ERR_CHECK(gpio_set_level(ACTUATOR_AIRFLOW_PIN, 0), air_ventilation);
-    else if (*val == 1)
-        ERR_CHECK(gpio_set_level(ACTUATOR_AIRFLOW_PIN, 1), air_ventilation);
+    if(*val == 1)
+        ERR_CHECK(blink(ACTUATOR_ALERT_PIN, 3), air_ventilation);
     
     return ESP_OK;
 }
@@ -45,10 +54,8 @@ esp_err_t air_ventilation(void* param)
 esp_err_t dehumidification(void* param)
 {
     uint32_t* val = (uint32_t*)param;
-    if(*val == 0)
-        ERR_CHECK(gpio_set_level(ACTUATOR_DEHUMID_PIN, 0), dehumidification);
-    else if (*val == 1)
-        ERR_CHECK(gpio_set_level(ACTUATOR_DEHUMID_PIN, 1), dehumidification);
+    if(*val == 1)
+        ERR_CHECK(blink(ACTUATOR_ALERT_PIN, 4), dehumidification);
     
     return ESP_OK;
 }
@@ -62,17 +69,9 @@ static struct _actuator_t_ actuators[] = {
 
 esp_err_t init_actuators(void)
 {
-    ERR_CHECK(gpio_set_direction(ACTUATOR_AIRCOND_PIN, GPIO_MODE_OUTPUT), init_actuators);
-    ERR_CHECK(gpio_set_direction(ACTUATOR_AIRFLOW_PIN, GPIO_MODE_OUTPUT), init_actuators);
-    ERR_CHECK(gpio_set_direction(ACTUATOR_DEHUMID_PIN, GPIO_MODE_OUTPUT), init_actuators);
-
-    ERR_CHECK(gpio_set_pull_mode(ACTUATOR_AIRCOND_PIN, GPIO_PULLUP_ONLY), init_actuators);
-    ERR_CHECK(gpio_set_pull_mode(ACTUATOR_AIRFLOW_PIN, GPIO_PULLUP_ONLY), init_actuators);
-    ERR_CHECK(gpio_set_pull_mode(ACTUATOR_DEHUMID_PIN, GPIO_PULLUP_ONLY), init_actuators);
-
-    ERR_CHECK(gpio_set_level(ACTUATOR_AIRCOND_PIN, 0), init_actuators);
-    ERR_CHECK(gpio_set_level(ACTUATOR_AIRFLOW_PIN, 0), init_actuators);
-    ERR_CHECK(gpio_set_level(ACTUATOR_DEHUMID_PIN, 0), init_actuators);
+    ERR_CHECK(gpio_set_direction(ACTUATOR_ALERT_PIN, GPIO_MODE_OUTPUT), init_actuators);
+    ERR_CHECK(gpio_set_pull_mode(ACTUATOR_ALERT_PIN, GPIO_PULLUP_ONLY), init_actuators);
+    ERR_CHECK(gpio_set_level(ACTUATOR_ALERT_PIN, 0), init_actuators);
 
     return ESP_OK;
 }
