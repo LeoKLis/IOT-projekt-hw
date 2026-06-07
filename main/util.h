@@ -2,6 +2,10 @@
 
 // #define DEBUG
 
+#ifndef ROOMID
+#define ROOMID "room1"
+#endif
+
 #ifndef DEBUG
 
 // TODO: Zamijeniti template sa pravim vrijednostima
@@ -20,14 +24,14 @@
 #define MQTT_PORT      1883
 
 // Topics ESP->HA
-#define MQTT_TOPIC_TEMP   "dht11/temp"     // temperatura
-#define MQTT_TOPIC_HUMID  "dht11/humidity" // vlaga
-#define MQTT_TOPIC_CO2    "ndir/co2"       // CO2
+#define MQTT_TOPIC_TEMP   "roomsense/" ROOMID "/telemetry/temp"     // temperatura
+#define MQTT_TOPIC_HUMID  "roomsense/" ROOMID "/telemetry/humidity" // vlaga
+#define MQTT_TOPIC_CO2    "roomsense/" ROOMID "/telemetry/co2"       // CO2
 
 // Topics HA->ESP
-#define MQTT_TOPIC_AIRCOND  "room/aircond" // klimatizacija
-#define MQTT_TOPIC_AIRFLOW  "room/airflow" // vantilacija
-#define MQTT_TOPIC_DEHUMID  "room/dehumid" // odvlaživanje
+#define MQTT_TOPIC_AIRCOND  ROOMID "/aircond" // klimatizacija
+#define MQTT_TOPIC_AIRFLOW  ROOMID "/airflow" // vantilacija
+#define MQTT_TOPIC_DEHUMID  ROOMID "/dehumid" // odvlaživanje
 
 // Actuator pins
 #define ACTUATOR_AIRCOND_PIN GPIO_NUM_11
