@@ -101,6 +101,7 @@ void cdmTask(void* pvParams) {
 }
 
 void app_main(void) {
+    // esp_task_wdt_init(0);
 // #ifndef DEBUG
     gpio_set_direction(BUSY_PIN, GPIO_MODE_INPUT);
     init_i2c(&dev_handle);

@@ -53,6 +53,7 @@ static void mqtt_event_handler(void* arg, esp_event_base_t base, int32_t event_i
             {
                 char payload[2] = {event->data[0], 0};
                 uint32_t val = (uint32_t)atoi(payload);
+                ESP_LOGI("foo", "Topic: %.*s, Payload: %u", event->topic_len, event->topic, val);
                 call_act_handler(act, (void*)&val);
             }
             break;

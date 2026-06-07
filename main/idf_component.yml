@@ -2,3 +2,4 @@ dependencies:
   idf: '>=6.0'
   esp-idf-lib/dht: ^1.2.0
   espressif/mqtt: '*'
+  espressif/led_strip: '*'
