@@ -24,74 +24,34 @@ struct _actuator_t_ {
 
 led_strip_handle_t led_strip;
 
-static esp_err_t blink(gpio_num_t pin, size_t count)
-{
-    while(count--)
-    {
-        // esp_rom_delay_us(BLINK_TIME_US);
-        vTaskDelay(BLINK_TIME_MS / portTICK_PERIOD_MS);
-        ERR_CHECK(gpio_set_level(pin, 1), blink);
-        vTaskDelay(BLINK_TIME_MS / portTICK_PERIOD_MS);
-        ERR_CHECK(gpio_set_level(pin, 0), blink);
-    }
-
-    return ESP_OK;
-}
-
 esp_err_t air_conditioning(void* param)
 {
     uint32_t* val = (uint32_t*)param;
     ESP_LOGI("foo_ac", "Val: %u", *val);
-    if(*val == 1) 
-    {
-        green = 255;
-        led_strip_set_pixel(led_strip, 0, red, green, blue);
-        led_strip_refresh(led_strip);
-    } 
-    else {
-        green = 0;
-        led_strip_set_pixel(led_strip, 0, red, green, blue);
-        led_strip_refresh(led_strip);
-    }
-    
+    green = (*val) ? 255 : 0;
+    led_strip_set_pixel(led_strip, 0, red, green, blue);
+    led_strip_refresh(led_strip);
+
     return ESP_OK;
 }
 
 esp_err_t air_ventilation(void* param)
 {
     uint32_t* val = (uint32_t*)param;
-    if(*val == 1) 
-    {
-        red = 255;
-        led_strip_set_pixel(led_strip, 0, red, green, blue);
-        led_strip_refresh(led_strip);
-    }
-    else 
-    {
-        red = 0;
-        led_strip_set_pixel(led_strip, 0, red, green, blue);
-        led_strip_refresh(led_strip);
-    }
-    
+    red = (*val) ? 255 : 0;
+    led_strip_set_pixel(led_strip, 0, red, green, blue);
+    led_strip_refresh(led_strip);
+
     return ESP_OK;
 }
 
 esp_err_t dehumidification(void* param)
 {
     uint32_t* val = (uint32_t*)param;
-    if(*val == 1) 
-    {
-        blue = 255;
-        led_strip_set_pixel(led_strip, 0, red, green, blue);
-        led_strip_refresh(led_strip);
-    }
-    else 
-    {
-        blue = 0;
-        led_strip_set_pixel(led_strip, 0, red, green, blue);
-        led_strip_refresh(led_strip);
-    }
-    
+    blue = (*val) ? 255 : 0;
+    led_strip_set_pixel(led_strip, 0, red, green, blue);
+    led_strip_refresh(led_strip);
+
     return ESP_OK;
 }
 
@@ -113,7 +73,7 @@ esp_err_t init_actuators(void)
         .max_leds = 1,
     };
     led_strip_rmt_config_t rmt_config = {
-        .resolution_hz = 10 * 1000 * 1000, // 10MHz
+        .resolution_hz = 10000000,
     };
     led_strip_new_rmt_device(&strip_config, &rmt_config, &led_strip);
 
